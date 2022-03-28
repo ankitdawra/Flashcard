@@ -1,75 +1,100 @@
-<template >
- <div class="row mt-5">
-
-                <div class="col-md-4" v-for="deck in decks" :key="deck.id">
-                  <div class="vertical flip-container" ontouchstart="this.classList.toggle('hover');">
-                        <div class="flipper">
-                            <div class="front">
-                              <div class="deck-name">{{ deck.name }}</div>
-                            </div>
-                            <div class="back">
-                              
-                                    <h6> Score: {{ deck['score'] }}</h6>  
-                                    <h6> Last Reviewed at: <br> {{ deck.last_reviewed }}</h6> 
-                    
-                                <div class="button-group"> 
-                                    <a href="/review" class="btn btn-outline-dark">Review</a>
-                                    <router-link  class=“btn btn-outline-dark”>Add Cards</router-link>
-                                    <a href="/editDeck" class="btn btn-outline-dark">Edit Deck</a>
-                                    <a href="/deleteDeck" class="btn btn-outline-dark" >Delete Deck</a>
-                                </div>
+<template>
+    <div>
+        <div class="add-new">
+            <h5 class="text-center">Add New Deck</h5>
+            <form class="form-inline" @submit.prevent="addNewDeck">
+                <div class="form-group">
+                    <input type="text" class="form-control" placeholder="Deck name" v-model="name"/>
+                </div>
+                <button type="submit" class="btn btn-primary"> Add </button>
+            </form>
+        </div>
+        <div class="row mt-5">
+            <div class="col-md-4" v-for="deck in userDecks" :key="deck.id">
+                <div class="vertical flip-container" ontouchstart="this.classList.toggle('hover');">
+    
+                    <div class="flipper">
+                        <div class="front">
+                            <div class="deck-name">{{ deck.name }}</div>
+                        </div>
+                        <div class="back">
+    
+                            <h6> Score: {{ deck['score'] }}</h6>
+                            <h6> Last Reviewed at: <br> {{ deck.last_reviewed }}</h6>
+    
+                            <div class="button-group">
+                                <router-link class="btn btn-outline-dark" :to="{name:'ReviewDeck', params: {id: deck.id}}">Review deck</router-link>
+                                <router-link class="btn btn-outline-dark" :to="{name:'AddNewCard', params: {id: deck.id}}">Add Card</router-link>
+                                <router-link class="btn btn-outline-dark" :to="{name:'EditDeck', params: {id: deck.id}}">Edit deck</router-link>
+                                <button class="btn btn-outline-dark" @click="deleteDeck(deck.id)">
+                                    Delete Deck</button>
                             </div>
                         </div>
                     </div>
                 </div>
-            
-            
+            </div>
         </div>
+    </div>
 </template>
 
-<script> 
-
-import axios from 'axios';
-
-
-const config = {
-    headers: { Authorization: `Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTY0ODE1MTM1MSwianRpIjoiNWYxNTRmZjItYzFlNS00ZjQzLWFhMmMtZWNiYTNjNTk1NmZjIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6MSwibmJmIjoxNjQ4MTUxMzUxLCJleHAiOjE2NDgxNTIyNTF9.NPuB_qU_Q5ucI70AWpgB9_3-RJ5yQr0uif5qgcodui0` }
-};
+<script>
+import { mapActions } from 'vuex';
 
 export default {
-  name: 'Dashboard',
-  data() {
-    return{ 
-        decks : null,
+    name: 'Dashboard',
+    data() {
+        return {
+            userDecks: null,
+            name: '',
         }
-  },
-
-  mounted()
-    {
-        axios
-            .get('http://127.0.0.1:5000/deck',
-            config)
-            .then((response) => {
-            this.decks = response.data;
-            console.log(this.decks);
-            });
+    },
+    methods: {
+        ...mapActions(['getUserDecks', 'deleteDeck', 'addDeck']),
+        addNewDeck() {
+            if (this.name) {
+                this.addDeck(this.name).then(() => {
+                    alert('Added');
+                });
+            } else {
+                alert('Please enter the name');
+            }
+        }
+    },
+    mounted() {
+        this.getUserDecks().then(decks => {
+            this.userDecks = decks;
+        })
+        // axios
+        //     .get('http://127.0.0.1:5000/deck', config(this.userToken))
+        //     .then((response) => {
+        //         this.decks = response.data;
+        //         console.log(this.decks);
+        //     });
     }
 };
 </script>
 
 <style scoped>
-
+.form-inline {
+    display: flex;
+}
+.form-inline .form-group {
+    flex: 1;
+}
 
 .flip-container {
     perspective: 1000px;
 }
 
-.flip-container, .front, .back {
+.flip-container,
+.front,
+.back {
     width: 240px;
     height: 320px;
 }
 
 /* flip speed goes here */
+
 .flipper {
     transition: 0.6s;
     transform-style: preserve-3d;
@@ -77,17 +102,19 @@ export default {
 }
 
 /* hide back of pane during swap */
-.front, .back {
+
+.front,
+.back {
     position: absolute;
     top: 0;
     left: 0;
-    backface-visibility:hidden;
-    -webkit-backface-visibility:hidden;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
     border: 5px solid black;
-
 }
 
 /* front pane, placed above back */
+
 .front {
     text-align: center;
     z-index: 1;
@@ -95,6 +122,7 @@ export default {
 }
 
 /* back, initially hidden pane */
+
 .back {
     transform: rotateX(-180deg);
     animation: toFront 0.3s linear normal forwards;
@@ -103,35 +131,50 @@ export default {
     background: darkred;
     color: white;
 }
+
 .vertical.flip-container {
     position: relative;
 }
+
 .vertical.flip-container:hover .back {
     animation-delay: 0.3s;
-    animation: toBack 0.3s linear normal  forwards;
+    animation: toBack 0.3s linear normal forwards;
 }
-@keyframes toBack {  
-  0% {z-index:0;}
-  100% {z-index:1;}
+
+@keyframes toBack {
+    0% {
+        z-index: 0;
+    }
+    100% {
+        z-index: 1;
+    }
 }
+
 @keyframes toFront {
-  0% {z-index:1;}
-  100% {z-index:0;}
+    0% {
+        z-index: 1;
+    }
+    100% {
+        z-index: 0;
+    }
 }
+
 .vertical.flip-container .flipper {
-    transform-origin: 100% 160px; /* half of height */
+    transform-origin: 100% 160px;
+    /* half of height */
 }
 
 .vertical.flip-container:hover .flipper {
     transform: rotateX(-180deg);
 }
+
 .button-group .btn {
-  margin: 10px;
-  padding: 10px;
-  display: block;
-  color: white;
-  border: 1px solid white;
-  width: 190px;
+    margin: 10px;
+    padding: 10px;
+    display: block;
+    color: white;
+    border: 1px solid white;
+    width: 190px;
 }
 
 .col-md-4 {
@@ -154,39 +197,46 @@ export default {
     background: darkred;
     position: relative;
 }
+
 .deck-name,
 .deck-name::before,
 .deck-name::after {
-  /* Styles to distinguish sheets from one another */
-  box-shadow: 1px 1px 1px rgba(0,0,0,0.25);
-  border: 1px solid black;
+    /* Styles to distinguish sheets from one another */
+    box-shadow: 1px 1px 1px rgba(0, 0, 0, 0.25);
+    border: 1px solid black;
 }
 
 .deck-name::before,
 .deck-name::after {
-  content: "";
-  position: absolute;
-  height: 95%;
-  width: 99%;
-  background-color:grey;
+    content: "";
+    position: absolute;
+    height: 95%;
+    width: 99%;
+    background-color: grey;
 }
 
 .deck-name::before {
-  right: 15px;
-  top: 0;
-  transform: rotate(-1deg);
-  z-index: -1;
+    right: 15px;
+    top: 0;
+    transform: rotate(-1deg);
+    z-index: -1;
 }
 
 .deck-name::after {
-  top: 5px;
-  right: -5px;
-  transform: rotate(1deg);
-  z-index: -2;
+    top: 5px;
+    right: -5px;
+    transform: rotate(1deg);
+    z-index: -2;
 }
 
 .card {
     border: 1px solid black;
 }
 
+.add-new {
+    width: 40%;
+    padding: 20px;
+    margin: 50px auto;
+    border: 1px solid;
+}
 </style>
